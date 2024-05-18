@@ -20,8 +20,12 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
-# Define the target website
-TARGET_URL = 'https://example.com'  # Ensure this URL is correct and reachable
+# Define the target websites
+TARGET_URLS = [
+    'https://example.com',
+    'https://example.org',
+    'https://example.net'
+]
 
 # Define ZAP API key and ZAP proxy settings
 ZAP_API_KEY = 'your_zap_api_key'
@@ -48,73 +52,73 @@ def check_zap_status():
     logger.error("ZAP did not start within the expected time.")
     return False
 
-def run_zap_scan():
-    logger.info("Running ZAP active scan...")
+def run_zap_scan(target_url):
+    logger.info(f"Running ZAP active scan for {target_url}...")
     try:
-        # Log the URL being scanned
-        logger.info(f"Starting scan for URL: {TARGET_URL}")
-        response = zap.urlopen(TARGET_URL)
+        # Access the target URL before scanning
+        zap.urlopen(target_url)
         time.sleep(2)  # Wait for the URL to be accessed
 
         # Start the scan
-        scan_id = zap.ascan.scan(TARGET_URL)
-        logger.info(f"Received scan ID: {scan_id}")
+        scan_id = zap.ascan.scan(target_url)
+        logger.info(f"Received scan ID for {target_url}: {scan_id}")
 
         if scan_id.isdigit():
             while int(zap.ascan.status(scan_id)) < 100:
-                logger.info(f"ZAP scan progress: {zap.ascan.status(scan_id)}%")
+                logger.info(f"ZAP scan progress for {target_url}: {zap.ascan.status(scan_id)}%")
                 time.sleep(10)
-            logger.info("ZAP scan completed")
+            logger.info(f"ZAP scan completed for {target_url}")
         else:
-            logger.error(f"Invalid scan ID: {scan_id}")
+            logger.error(f"Invalid scan ID for {target_url}: {scan_id}")
     except Exception as e:
-        logger.error(f"Error running ZAP active scan: {e}")
+        logger.error(f"Error running ZAP active scan for {target_url}: {e}")
 
-def fetch_zap_results():
-    logger.info("Fetching ZAP scan results...")
+def fetch_zap_results(target_url):
+    logger.info(f"Fetching ZAP scan results for {target_url}...")
     try:
-        alerts = zap.core.alerts(baseurl=TARGET_URL)
+        alerts = zap.core.alerts(baseurl=target_url)
         for alert in alerts:
-            logger.info(f"ZAP Alert: {alert['alert']} - Risk: {alert['risk']} - URL: {alert['url']} - Description: {alert['description']}")
+            logger.info(f"ZAP Alert for {target_url}: {alert['alert']} - Risk: {alert['risk']} - URL: {alert['url']} - Description: {alert['description']}")
     except Exception as e:
-        logger.error(f"Error fetching ZAP results: {e}")
+        logger.error(f"Error fetching ZAP results for {target_url}: {e}")
 
-def run_sqlmap():
-    logger.info("Running sqlmap...")
-    sqlmap_command = f"sqlmap -u {TARGET_URL} --batch --output-dir=./sqlmap_output"
+def run_sqlmap(target_url):
+    logger.info(f"Running sqlmap for {target_url}...")
+    sqlmap_command = f"sqlmap -u {target_url} --batch --output-dir=./sqlmap_output"
     process = subprocess.Popen(sqlmap_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         out, err = process.communicate(timeout=300)  # 5-minute timeout
-        logger.info(f"sqlmap output: {out.decode('utf-8')}")
+        logger.info(f"sqlmap output for {target_url}: {out.decode('utf-8')}")
         if err:
-            logger.error(f"sqlmap error: {err.decode('utf-8')}")
+            logger.error(f"sqlmap error for {target_url}: {err.decode('utf-8')}")
     except subprocess.TimeoutExpired:
         process.kill()
         out, err = process.communicate()
-        logger.error("sqlmap process timed out")
+        logger.error(f"sqlmap process for {target_url} timed out")
 
-def run_nikto():
-    logger.info("Running nikto...")
-    nikto_command = f"nikto -h {TARGET_URL} -output ./nikto_output.txt"
+def run_nikto(target_url):
+    logger.info(f"Running nikto for {target_url}...")
+    nikto_command = f"nikto -h {target_url} -output ./nikto_output_{target_url.replace('https://', '').replace('/', '_')}.txt"
     process = subprocess.Popen(nikto_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         out, err = process.communicate(timeout=600)  # 10-minute timeout
-        logger.info(f"nikto output: {out.decode('utf-8')}")
+        logger.info(f"nikto output for {target_url}: {out.decode('utf-8')}")
         if err:
-            logger.error(f"nikto error: {err.decode('utf-8')}")
+            logger.error(f"nikto error for {target_url}: {err.decode('utf-8')}")
     except subprocess.TimeoutExpired:
         process.kill()
         out, err = process.communicate()
-        logger.error("nikto process timed out")
+        logger.error(f"nikto process for {target_url} timed out")
 
 def test_waf():
     logger.info("Starting WAF testing cycle...")
     start_zap()
     if check_zap_status():
-        run_zap_scan()
-        fetch_zap_results()
-        run_sqlmap()
-        run_nikto()
+        for target_url in TARGET_URLS:
+            run_zap_scan(target_url)
+            fetch_zap_results(target_url)
+            run_sqlmap(target_url)
+            run_nikto(target_url)
         zap.core.shutdown()
         logger.info("Completed WAF testing cycle")
     else:
