@@ -31,7 +31,10 @@ This script is designed to test multiple websites for vulnerabilities to ensure 
    ```
 
 4. **Install w3af:**
-   Follow the installation instructions on the [w3af website](https://github.com/andresriancho/w3af#installation).
+   ```bash
+   apt-get update
+   apt-get install -y w3af
+   ```
 
 5. **Install WPScan:**
    ```bash
