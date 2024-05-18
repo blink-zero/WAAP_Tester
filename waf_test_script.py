@@ -21,7 +21,7 @@ console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
 # Define the target website
-TARGET_URL = 'https://example.com'
+TARGET_URL = 'https://example.com'  # Ensure this URL is correct and reachable
 
 # Define ZAP API key and ZAP proxy settings
 ZAP_API_KEY = 'your_zap_api_key'
@@ -51,7 +51,15 @@ def check_zap_status():
 def run_zap_scan():
     logger.info("Running ZAP active scan...")
     try:
+        # Log the URL being scanned
+        logger.info(f"Starting scan for URL: {TARGET_URL}")
+        response = zap.urlopen(TARGET_URL)
+        time.sleep(2)  # Wait for the URL to be accessed
+
+        # Start the scan
         scan_id = zap.ascan.scan(TARGET_URL)
+        logger.info(f"Received scan ID: {scan_id}")
+
         if scan_id.isdigit():
             while int(zap.ascan.status(scan_id)) < 100:
                 logger.info(f"ZAP scan progress: {zap.ascan.status(scan_id)}%")
@@ -79,49 +87,4 @@ def run_sqlmap():
         out, err = process.communicate(timeout=300)  # 5-minute timeout
         logger.info(f"sqlmap output: {out.decode('utf-8')}")
         if err:
-            logger.error(f"sqlmap error: {err.decode('utf-8')}")
-    except subprocess.TimeoutExpired:
-        process.kill()
-        out, err = process.communicate()
-        logger.error("sqlmap process timed out")
-
-def run_nikto():
-    logger.info("Running nikto...")
-    nikto_command = f"nikto -h {TARGET_URL} -output ./nikto_output.txt"
-    process = subprocess.Popen(nikto_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    try:
-        out, err = process.communicate(timeout=600)  # 10-minute timeout
-        logger.info(f"nikto output: {out.decode('utf-8')}")
-        if err:
-            logger.error(f"nikto error: {err.decode('utf-8')}")
-    except subprocess.TimeoutExpired:
-        process.kill()
-        out, err = process.communicate()
-        logger.error("nikto process timed out")
-
-def test_waf():
-    logger.info("Starting WAF testing cycle...")
-    start_zap()
-    if check_zap_status():
-        run_zap_scan()
-        fetch_zap_results()
-        run_sqlmap()
-        run_nikto()
-        zap.core.shutdown()
-        logger.info("Completed WAF testing cycle")
-    else:
-        logger.error("Skipping scans as ZAP is not running")
-
-# Schedule the WAF test to run every 10 minutes (adjust as needed)
-schedule.every(10).minutes.do(test_waf)
-
-# Immediate call to test_waf for debugging purposes
-test_waf()
-
-try:
-    logger.info("Starting WAF testing script...")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
-except KeyboardInterrupt:
-    logger.info("Stopping WAF testing script...")
+            logger.error(f"sqlmap e
