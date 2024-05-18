@@ -6,8 +6,19 @@ import logging
 import schedule
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, filename='waf_test.log', filemode='a',
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# Log to file
+file_handler = logging.FileHandler('waf_test.log')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# Log to console
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 # Define the target website
 TARGET_URL = 'https://example.com'
@@ -21,9 +32,9 @@ zap = ZAPv2(apikey=ZAP_API_KEY, proxies={'http': ZAP_PROXY, 'https': ZAP_PROXY})
 
 def start_zap():
     logging.info("Starting OWASP ZAP...")
-    zap.core.new_session(name='WAF_Test_Session', overwrite=True)
-    zap.core.access_url(url=TARGET_URL)
-    time.sleep(2)  # Wait for ZAP to initialize
+    zap_start_command = '/usr/share/zaproxy/zap.sh -daemon -config api.key=' + ZAP_API_KEY
+    subprocess.Popen(zap_start_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    time.sleep(10)  # Wait for ZAP to initialize
 
 def run_zap_scan():
     logging.info("Running ZAP active scan...")
