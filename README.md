@@ -1,7 +1,7 @@
 
 # WAF Testing Script
 
-This script is designed to test multiple websites for vulnerabilities to ensure that their Web Application Firewalls (WAFs) are functioning correctly. It uses OWASP ZAP, sqlmap, nikto, w3af, and wpscan to perform various security scans. The script is set to run these tests every 10 minutes.
+This script is designed to test multiple websites for vulnerabilities to ensure that their Web Application Firewalls (WAFs) are functioning correctly. It uses OWASP ZAP, sqlmap, nikto and wpscan to perform various security scans. The script is set to run these tests every 10 minutes.
 
 ## Prerequisites
 
