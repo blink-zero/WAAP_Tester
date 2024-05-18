@@ -55,11 +55,9 @@ def check_zap_status():
 def run_zap_scan(target_url):
     logger.info(f"Running ZAP active scan for {target_url}...")
     try:
-        # Access the target URL before scanning
         zap.urlopen(target_url)
         time.sleep(2)  # Wait for the URL to be accessed
 
-        # Start the scan
         scan_id = zap.ascan.scan(target_url)
         logger.info(f"Received scan ID for {target_url}: {scan_id}")
 
@@ -110,6 +108,34 @@ def run_nikto(target_url):
         out, err = process.communicate()
         logger.error(f"nikto process for {target_url} timed out")
 
+def run_arachni(target_url):
+    logger.info(f"Running Arachni for {target_url}...")
+    arachni_command = f"arachni {target_url} --output-only-positives --report-save-path=./arachni_output_{target_url.replace('https://', '').replace('/', '_')}.afr"
+    process = subprocess.Popen(arachni_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        out, err = process.communicate(timeout=600)  # 10-minute timeout
+        logger.info(f"Arachni output for {target_url}: {out.decode('utf-8')}")
+        if err:
+            logger.error(f"Arachni error for {target_url}: {err.decode('utf-8')}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        logger.error(f"Arachni process for {target_url} timed out")
+
+def run_wpscan(target_url):
+    logger.info(f"Running wpscan for {target_url}...")
+    wpscan_command = f"wpscan --url {target_url} --no-banner"
+    process = subprocess.Popen(wpscan_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        out, err = process.communicate(timeout=600)  # 10-minute timeout
+        logger.info(f"wpscan output for {target_url}: {out.decode('utf-8')}")
+        if err:
+            logger.error(f"wpscan error for {target_url}: {err.decode('utf-8')}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        logger.error(f"wpscan process for {target_url} timed out")
+
 def test_waf():
     logger.info("Starting WAF testing cycle...")
     start_zap()
@@ -119,6 +145,8 @@ def test_waf():
             fetch_zap_results(target_url)
             run_sqlmap(target_url)
             run_nikto(target_url)
+            run_arachni(target_url)
+            run_wpscan(target_url)
         zap.core.shutdown()
         logger.info("Completed WAF testing cycle")
     else:
