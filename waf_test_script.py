@@ -87,4 +87,49 @@ def run_sqlmap():
         out, err = process.communicate(timeout=300)  # 5-minute timeout
         logger.info(f"sqlmap output: {out.decode('utf-8')}")
         if err:
-            logger.error(f"sqlmap e
+            logger.error(f"sqlmap error: {err.decode('utf-8')}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        logger.error("sqlmap process timed out")
+
+def run_nikto():
+    logger.info("Running nikto...")
+    nikto_command = f"nikto -h {TARGET_URL} -output ./nikto_output.txt"
+    process = subprocess.Popen(nikto_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        out, err = process.communicate(timeout=600)  # 10-minute timeout
+        logger.info(f"nikto output: {out.decode('utf-8')}")
+        if err:
+            logger.error(f"nikto error: {err.decode('utf-8')}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        logger.error("nikto process timed out")
+
+def test_waf():
+    logger.info("Starting WAF testing cycle...")
+    start_zap()
+    if check_zap_status():
+        run_zap_scan()
+        fetch_zap_results()
+        run_sqlmap()
+        run_nikto()
+        zap.core.shutdown()
+        logger.info("Completed WAF testing cycle")
+    else:
+        logger.error("Skipping scans as ZAP is not running")
+
+# Schedule the WAF test to run every 10 minutes (adjust as needed)
+schedule.every(10).minutes.do(test_waf)
+
+# Immediate call to test_waf for debugging purposes
+test_waf()
+
+try:
+    logger.info("Starting WAF testing script...")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+except KeyboardInterrupt:
+    logger.info("Stopping WAF testing script...")
