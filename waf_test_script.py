@@ -108,19 +108,37 @@ def run_nikto(target_url):
         out, err = process.communicate()
         logger.error(f"nikto process for {target_url} timed out")
 
-def run_arachni(target_url):
-    logger.info(f"Running Arachni for {target_url}...")
-    arachni_command = f"arachni {target_url} --output-only-positives --report-save-path=./arachni_output_{target_url.replace('https://', '').replace('/', '_')}.afr"
-    process = subprocess.Popen(arachni_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def run_w3af(target_url):
+    logger.info(f"Running w3af for {target_url}...")
+    w3af_command = f"w3af_console -s w3af_script.w3af"
+    script_content = f"""
+plugins
+    output console
+    output text_file
+    output config text_file
+    set output_file ./w3af_output_{target_url.replace('https://', '').replace('/', '_')}.txt
+    back
+
+target
+    set target {target_url}
+    back
+
+start
+exit
+"""
+    with open('w3af_script.w3af', 'w') as script_file:
+        script_file.write(script_content)
+    process = subprocess.Popen(w3af_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         out, err = process.communicate(timeout=600)  # 10-minute timeout
-        logger.info(f"Arachni output for {target_url}: {out.decode('utf-8')}")
+        logger.info(f"w3af output for {target_url}: {out.decode('utf-8')}")
         if err:
-            logger.error(f"Arachni error for {target_url}: {err.decode('utf-8')}")
+            logger.error(f"w3af error for {target_url}: {err.decode('utf-8')}")
     except subprocess.TimeoutExpired:
         process.kill()
         out, err = process.communicate()
-        logger.error(f"Arachni process for {target_url} timed out")
+        logger.error(f"w3af process for {target_url} timed out")
+    os.remove('w3af_script.w3af')
 
 def run_wpscan(target_url):
     logger.info(f"Running wpscan for {target_url}...")
@@ -145,7 +163,7 @@ def test_waf():
             fetch_zap_results(target_url)
             run_sqlmap(target_url)
             run_nikto(target_url)
-            run_arachni(target_url)
+            run_w3af(target_url)
             run_wpscan(target_url)
         zap.core.shutdown()
         logger.info("Completed WAF testing cycle")
