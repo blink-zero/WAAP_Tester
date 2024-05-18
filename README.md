@@ -35,8 +35,16 @@ This script is designed to test multiple websites for vulnerabilities to ensure 
    apt-get update
    apt-get install -y w3af
    ```
+   or
+   ```bash
+   cd ~
+   git clone https://github.com/andresriancho/w3af.git
+   cd w3af
+   ./w3af_console
+   . /tmp/w3af_dependency_install.sh
+   ```
 
-5. **Install WPScan:**
+6. **Install WPScan:**
    ```bash
    sudo gem install wpscan
    ```
