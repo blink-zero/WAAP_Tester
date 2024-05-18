@@ -25,7 +25,7 @@ TARGET_URL = 'https://example.com'
 
 # Define ZAP API key and ZAP proxy settings
 ZAP_API_KEY = 'your_zap_api_key'
-ZAP_PROXY = 'http://127.0.0.1:8082'
+ZAP_PROXY = 'http://127.0.0.1:8080'
 
 # Initialize ZAP instance
 zap = ZAPv2(apikey=ZAP_API_KEY, proxies={'http': ZAP_PROXY, 'https': ZAP_PROXY})
@@ -75,19 +75,29 @@ def run_sqlmap():
     logger.info("Running sqlmap...")
     sqlmap_command = f"sqlmap -u {TARGET_URL} --batch --output-dir=./sqlmap_output"
     process = subprocess.Popen(sqlmap_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    logger.info(f"sqlmap output: {out.decode('utf-8')}")
-    if err:
-        logger.error(f"sqlmap error: {err.decode('utf-8')}")
+    try:
+        out, err = process.communicate(timeout=300)  # 5-minute timeout
+        logger.info(f"sqlmap output: {out.decode('utf-8')}")
+        if err:
+            logger.error(f"sqlmap error: {err.decode('utf-8')}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        logger.error("sqlmap process timed out")
 
 def run_nikto():
     logger.info("Running nikto...")
     nikto_command = f"nikto -h {TARGET_URL} -output ./nikto_output.txt"
     process = subprocess.Popen(nikto_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    logger.info(f"nikto output: {out.decode('utf-8')}")
-    if err:
-        logger.error(f"nikto error: {err.decode('utf-8')}")
+    try:
+        out, err = process.communicate(timeout=600)  # 10-minute timeout
+        logger.info(f"nikto output: {out.decode('utf-8')}")
+        if err:
+            logger.error(f"nikto error: {err.decode('utf-8')}")
+    except subprocess.TimeoutExpired:
+        process.kill()
+        out, err = process.communicate()
+        logger.error("nikto process timed out")
 
 def test_waf():
     logger.info("Starting WAF testing cycle...")
