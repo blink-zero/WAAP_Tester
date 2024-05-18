@@ -32,23 +32,21 @@ zap = ZAPv2(apikey=ZAP_API_KEY, proxies={'http': ZAP_PROXY, 'https': ZAP_PROXY})
 
 def start_zap():
     logger.info("Starting OWASP ZAP...")
-    zap_start_command = '/usr/share/zaproxy/zap.sh -daemon -config api.key=' + ZAP_API_KEY
-    process = subprocess.Popen(zap_start_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    if out:
-        logger.info(f"ZAP start output: {out.decode('utf-8')}")
-    if err:
-        logger.error(f"ZAP start error: {err.decode('utf-8')}")
-    time.sleep(30)  # Increase wait time to ensure ZAP is fully initialized
+    zap_start_command = ['/usr/share/zaproxy/zap.sh', '-daemon', '-config', f'api.key={ZAP_API_KEY}']
+    subprocess.Popen(zap_start_command)
+    logger.info("OWASP ZAP started, waiting for initialization...")
 
 def check_zap_status():
-    try:
-        version = zap.core.version
-        logger.info(f"ZAP is running. Version: {version}")
-        return True
-    except Exception as e:
-        logger.error(f"ZAP is not running: {e}")
-        return False
+    for _ in range(20):  # Retry for 200 seconds
+        try:
+            version = zap.core.version
+            logger.info(f"ZAP is running. Version: {version}")
+            return True
+        except Exception as e:
+            logger.warning(f"ZAP is not yet running: {e}")
+            time.sleep(10)
+    logger.error("ZAP did not start within the expected time.")
+    return False
 
 def run_zap_scan():
     logger.info("Running ZAP active scan...")
