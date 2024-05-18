@@ -30,20 +30,6 @@ This script is designed to test multiple websites for vulnerabilities to ensure 
    sudo apt-get install sqlmap nikto
    ```
 
-4. **Install w3af:**
-   ```bash
-   apt-get update
-   apt-get install -y w3af
-   ```
-   or
-   ```bash
-   cd ~
-   git clone https://github.com/andresriancho/w3af.git
-   cd w3af
-   ./w3af_console
-   . /tmp/w3af_dependency_install.sh
-   ```
-
 6. **Install WPScan:**
    ```bash
    sudo gem install wpscan
@@ -79,7 +65,6 @@ The script will start OWASP ZAP, check its status, and then proceed to run secur
 - `fetch_zap_results(target_url)`: Fetches the results of the ZAP scan.
 - `run_sqlmap(target_url)`: Runs sqlmap against the specified target URL.
 - `run_nikto(target_url)`: Runs nikto against the specified target URL.
-- `run_w3af(target_url)`: Runs w3af against the specified target URL.
 - `run_wpscan(target_url)`: Runs wpscan against the specified target URL.
 - `test_waf()`: Orchestrates the entire testing cycle for all target URLs.
 
