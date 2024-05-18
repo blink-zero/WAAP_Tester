@@ -4,6 +4,7 @@ import subprocess
 from zapv2 import ZAPv2
 import logging
 import schedule
+from threading import Lock
 
 # Set up logging
 logger = logging.getLogger()
@@ -33,6 +34,9 @@ ZAP_PROXY = 'http://127.0.0.1:8080'
 
 # Initialize ZAP instance
 zap = ZAPv2(apikey=ZAP_API_KEY, proxies={'http': ZAP_PROXY, 'https': ZAP_PROXY})
+
+# Lock to prevent overlapping scans
+scan_lock = Lock()
 
 def start_zap():
     logger.info("Starting OWASP ZAP...")
@@ -99,7 +103,7 @@ def run_nikto(target_url):
     nikto_command = f"nikto -h {target_url} -output ./nikto_output_{target_url.replace('https://', '').replace('/', '_')}.txt"
     process = subprocess.Popen(nikto_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
-        out, err = process.communicate(timeout=600)  # 10-minute timeout
+        out, err = process.communicate(timeout=600) # 10-minute timeout
         logger.info(f"nikto output for {target_url}: {out.decode('utf-8')}")
         if err:
             logger.error(f"nikto error for {target_url}: {err.decode('utf-8')}")
@@ -123,19 +127,24 @@ def run_wpscan(target_url):
         logger.error(f"wpscan process for {target_url} timed out")
 
 def test_waf():
-    logger.info("Starting WAF testing cycle...")
-    start_zap()
-    if check_zap_status():
-        for target_url in TARGET_URLS:
-            run_zap_scan(target_url)
-            fetch_zap_results(target_url)
-            run_sqlmap(target_url)
-            run_nikto(target_url)
-            run_wpscan(target_url)
-        zap.core.shutdown()
-        logger.info("Completed WAF testing cycle")
-    else:
-        logger.error("Skipping scans as ZAP is not running")
+    if scan_lock.locked():
+        logger.info("Previous scan is still running. Skipping this cycle.")
+        return
+
+    with scan_lock:
+        logger.info("Starting WAF testing cycle...")
+        start_zap()
+        if check_zap_status():
+            for target_url in TARGET_URLS:
+                run_zap_scan(target_url)
+                fetch_zap_results(target_url)
+                run_sqlmap(target_url)
+                run_nikto(target_url)
+                run_wpscan(target_url)
+            zap.core.shutdown()
+            logger.info("Completed WAF testing cycle")
+        else:
+            logger.error("Skipping scans as ZAP is not running")
 
 # Schedule the WAF test to run every 10 minutes (adjust as needed)
 schedule.every(10).minutes.do(test_waf)
