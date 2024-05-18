@@ -1,7 +1,7 @@
 
 # WAF Testing Script
 
-This script is designed to test multiple websites for vulnerabilities to ensure that their Web Application Firewalls (WAFs) are functioning correctly. It uses OWASP ZAP, sqlmap, nikto, Arachni, and wpscan to perform various security scans. The script is set to run these tests every 10 minutes.
+This script is designed to test multiple websites for vulnerabilities to ensure that their Web Application Firewalls (WAFs) are functioning correctly. It uses OWASP ZAP, sqlmap, nikto, w3af, and wpscan to perform various security scans. The script is set to run these tests every 10 minutes.
 
 ## Prerequisites
 
@@ -30,8 +30,8 @@ This script is designed to test multiple websites for vulnerabilities to ensure 
    sudo apt-get install sqlmap nikto
    ```
 
-4. **Install Arachni:**
-   Follow the installation instructions on the [Arachni website](https://github.com/Arachni/arachni#installation).
+4. **Install w3af:**
+   Follow the installation instructions on the [w3af website](https://github.com/andresriancho/w3af#installation).
 
 5. **Install WPScan:**
    ```bash
@@ -56,7 +56,7 @@ This script is designed to test multiple websites for vulnerabilities to ensure 
    python waf_test_script.py
    ```
 
-The script will start OWASP ZAP, check its status, and then proceed to run security scans on each target URL using OWASP ZAP, sqlmap, nikto, Arachni, and wpscan. The results are logged to both the console and a log file (`waf_test.log`).
+The script will start OWASP ZAP, check its status, and then proceed to run security scans on each target URL using OWASP ZAP, sqlmap, nikto, w3af, and wpscan. The results are logged to both the console and a log file (`waf_test.log`).
 
 ## Script Overview
 
@@ -68,7 +68,7 @@ The script will start OWASP ZAP, check its status, and then proceed to run secur
 - `fetch_zap_results(target_url)`: Fetches the results of the ZAP scan.
 - `run_sqlmap(target_url)`: Runs sqlmap against the specified target URL.
 - `run_nikto(target_url)`: Runs nikto against the specified target URL.
-- `run_arachni(target_url)`: Runs Arachni against the specified target URL.
+- `run_w3af(target_url)`: Runs w3af against the specified target URL.
 - `run_wpscan(target_url)`: Runs wpscan against the specified target URL.
 - `test_waf()`: Orchestrates the entire testing cycle for all target URLs.
 
@@ -82,5 +82,5 @@ The script logs its actions and results to both the console and a log file (`waf
 
 ## Troubleshooting
 
-- **ZAP is not starting**: Ensure no other instances of ZAP are running and that the correct API key is used. In some cases the ZAP port could be 8082 or different.
+- **ZAP is not starting**: Ensure no other instances of ZAP are running and that the correct API key is used. In some cases the api url for zap may be 8082 or different, If you encounter problems just open ZAP and check this manually.
 - **Script hangs or crashes**: Check the log file (`waf_test.log`) for detailed error messages and ensure all dependencies are installed correctly.
