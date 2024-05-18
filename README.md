@@ -73,7 +73,3 @@ The script logs its actions and results to both the console and a log file (`waf
 
 - **ZAP is not starting**: Ensure no other instances of ZAP are running and that the correct API key is used.
 - **Script hangs or crashes**: Check the log file (`waf_test.log`) for detailed error messages and ensure all dependencies are installed correctly.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
