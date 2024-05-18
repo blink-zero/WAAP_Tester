@@ -71,5 +71,5 @@ The script logs its actions and results to both the console and a log file (`waf
 
 ## Troubleshooting
 
-- **ZAP is not starting**: Ensure no other instances of ZAP are running and that the correct API key is used.
+- **ZAP is not starting**: Ensure no other instances of ZAP are running and that the correct API key is used. You may also need to verify that the port is correct, In some cases the port can be 8082.
 - **Script hangs or crashes**: Check the log file (`waf_test.log`) for detailed error messages and ensure all dependencies are installed correctly.
